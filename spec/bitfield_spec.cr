@@ -1,8 +1,9 @@
 require "./spec_helper"
 
 class TestField < BitField(UInt8)
-  bool :bool_val, 0
-  num :top_four, 4, 4
+  num :four, 4
+  bool :bool
+  num :three, 3
 end
 
 describe BitField do
@@ -11,25 +12,42 @@ describe BitField do
     bf.value.should eq 0xAF
   end
 
-  it "gets first four" do
+  it "gets upper four" do
     bf = TestField.new 0x9C
-    bf.top_four.should eq 0x9
+    bf.four.should eq 0x9
+    bf.value.should eq 0x9C
   end
 
-  it "sets first four" do
-    bf = TestField.new 0x34
-    bf.top_four = 0x5
-    bf.top_four.should eq 0x5
+  it "sets upper four" do
+    bf = TestField.new 0x9C
+    bf.four = 0x5
+    bf.four.should eq 0x5
+    bf.value.should eq 0x5C
   end
 
   it "gets bool" do
-    bf = TestField.new 0xFE
-    bf.bool_val.should eq false
+    bf = TestField.new 0xF7
+    bf.bool.should eq false
+    bf.value.should eq 0xF7
   end
 
   it "sets bool" do
-    bf = TestField.new 0xFE
-    bf.bool_val = true
-    bf.bool_val.should eq true
+    bf = TestField.new 0xF7
+    bf.bool = true
+    bf.bool.should eq true
+    bf.value.should eq 0xFF
+  end
+
+  it "gets lower three" do
+    bf = TestField.new 0x0F
+    bf.three.should eq 0x07
+    bf.value.should eq 0x0F
+  end
+
+  it "sets lower three" do
+    bf = TestField.new 0x0F
+    bf.three = 0x5
+    bf.three.should eq 0x5
+    bf.value.should eq 0x0D
   end
 end

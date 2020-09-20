@@ -5,32 +5,44 @@ class BitField(T)
     {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
   end
 
-  macro num(name, start, size)
-    def {{name.id}} : T
-      get_val({{start}}, {{size}})
-    end
+  macro inherited
+    POS = [8]
 
-    def {{name.id}}=(val : T) : Nil
-      set_val({{start}}, {{size}})
+    macro finished
+      \{% raise "You must describe exactly #{8} bits (#{8 - POS[0]} bits have been described)" unless POS[0] == 0 %}
     end
   end
 
-  macro bool(name, start)
+  macro num(name, size)
+    {% POS[0] -= size %}
+
+    def {{name.id}} : T
+      get_val({{size}}, {{POS[0]}})
+    end
+
+    def {{name.id}}=(val : T) : Nil
+      set_val({{size}}, {{POS[0]}})
+    end
+  end
+
+  macro bool(name)
+    {% POS[0] -= 1 %}
+
     def {{name.id}} : Bool
-      get_val({{start}}, 1) > 0
+      get_val(1, {{POS[0]}}) > 0
     end
 
     def {{name.id}}=(val : Bool) : Nil
       val = val ? 1 : 0
-      set_val({{start}}, 1)
+      set_val(1, {{POS[0]}})
     end
   end
 
-  macro get_val(start, size)
+  macro get_val(size, start)
     (@value >> {{start}} & mask({{size}}))
   end
 
-  macro set_val(start, size)
+  macro set_val(size, start)
     (@value = @value & ~shifted_mask({{size}}, {{start}}) | (val & mask({{size}})) << {{start}})
   end
 

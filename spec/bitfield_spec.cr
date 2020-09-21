@@ -1,9 +1,9 @@
 require "./spec_helper"
 
 class TestField < BitField(UInt8)
-  num :four, 4
-  bool :bool
-  num :three, 3
+  num four, 4
+  bool bool
+  num three, 3
 end
 
 describe BitField do

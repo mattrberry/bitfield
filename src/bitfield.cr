@@ -1,41 +1,31 @@
 class BitField(T)
+  SIZE = [0] # stored in an array so that it can be mutated at compile-time
+
   property value : T
 
   def initialize(@value : T)
-    {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
+    bits = sizeof(T) * 8
+    raise "You must describe exactly #{bits} bits (#{SIZE[0]} bits have been described)" unless SIZE[0] == bits
   end
 
   macro inherited
-    POS = [8]
+    {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
+
+    FIELDS = [] of Tuple(String, Symbol, Int32) # name, type, size
 
     macro finished
-      \{% raise "You must describe exactly #{8} bits (#{8 - POS[0]} bits have been described)" unless POS[0] == 0 %}
+      build_methods
     end
   end
 
   macro num(name, size)
-    {% POS[0] -= size %}
-
-    def {{name.id}} : T
-      get_val({{size}}, {{POS[0]}})
-    end
-
-    def {{name.id}}=(val : T) : Nil
-      set_val({{size}}, {{POS[0]}})
-    end
+    {% SIZE[0] += size %}
+    {% FIELDS << {name, :num, size} %}
   end
 
   macro bool(name)
-    {% POS[0] -= 1 %}
-
-    def {{name.id}} : Bool
-      get_val(1, {{POS[0]}}) > 0
-    end
-
-    def {{name.id}}=(val : Bool) : Nil
-      val = val ? 1 : 0
-      set_val(1, {{POS[0]}})
-    end
+    {% SIZE[0] += 1 %}
+    {% FIELDS << {name, :bool, 1} %}
   end
 
   macro get_val(size, start)
@@ -52,5 +42,27 @@ class BitField(T)
 
   macro shifted_mask(size, start)
     (mask({{size}}) << {{start}})
+  end
+
+  macro build_methods
+    {% pos = SIZE[0] %}
+
+    {% for field in FIELDS %}
+      {% name = field[0].id %}
+      {% bool = field[1] == :bool %}
+      {% size = field[2] %}
+      {% type = bool ? Bool : T %}
+
+      {% pos -= size %}
+
+      def {{name}} : {{type}}
+        get_val({{size}}, {{pos}}) {% if bool %} > 0 {% end %}
+      end
+
+      def {{name}}=(val : {{type}}) : Nil
+        {% if bool %} val = val ? 1 : 0 {% end %}
+        set_val({{size}}, {{pos}})
+      end
+    {% end %}
   end
 end

@@ -1,17 +1,16 @@
-class BitField(T)
-  SIZE = [0] # stored in an array so that it can be mutated at compile-time
-
-  property value : T
-
-  def initialize(@value : T)
-    bits = sizeof(T) * 8
-    raise "You must describe exactly #{bits} bits (#{SIZE[0]} bits have been described)" unless SIZE[0] == bits
-  end
-
+abstract class BitField(T)
   macro inherited
     {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
 
+    SIZE = [0] # stored in an array so that it can be mutated at compile-time
     FIELDS = [] of Tuple(String, Symbol, Int32) # name, type, size
+
+    property value : T
+
+    def initialize(@value : T)
+      bits = sizeof(T) * 8
+      raise "You must describe exactly #{bits} bits (#{SIZE[0]} bits have been described)" unless SIZE[0] == bits
+    end
 
     macro finished
       build_methods
@@ -19,12 +18,10 @@ class BitField(T)
   end
 
   macro num(name, size)
-    {% SIZE[0] += size %}
     {% FIELDS << {name, :num, size} %}
   end
 
   macro bool(name)
-    {% SIZE[0] += 1 %}
     {% FIELDS << {name, :bool, 1} %}
   end
 
@@ -45,7 +42,9 @@ class BitField(T)
   end
 
   macro build_methods
-    {% pos = SIZE[0] %}
+    {% pos = 0 %}
+    {% FIELDS.map {|f| pos += f[2]} %}
+    {% SIZE[0] = pos %}
 
     {% for field in FIELDS %}
       {% name = field[0].id %}

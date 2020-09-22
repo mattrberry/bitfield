@@ -1,6 +1,6 @@
 require "./spec_helper"
 
-class TestField < BitField(UInt8)
+class Test8 < BitField(UInt8)
   num four, 4
   bool bool
   num three, 3
@@ -14,52 +14,60 @@ class Test32 < BitField(UInt32)
   num rest, 28
 end
 
+class TestTooFew < BitField(UInt16)
+  num too_few, 15
+end
+
+class TestTooMany < BitField(UInt16)
+  num too_many, 17
+end
+
 describe BitField do
   it "gets whole value" do
-    bf = TestField.new 0xAF
+    bf = Test8.new 0xAF
     bf.value.should eq 0xAF
   end
 
   it "sets whole value" do
-    bf = TestField.new 0xAF
+    bf = Test8.new 0xAF
     bf.value = 0xFA
     bf.value.should eq 0xFA
   end
 
   it "gets upper four" do
-    bf = TestField.new 0x9C
+    bf = Test8.new 0x9C
     bf.four.should eq 0x9
     bf.value.should eq 0x9C
   end
 
   it "sets upper four" do
-    bf = TestField.new 0x9C
+    bf = Test8.new 0x9C
     bf.four = 0x5
     bf.four.should eq 0x5
     bf.value.should eq 0x5C
   end
 
   it "gets bool" do
-    bf = TestField.new 0xF7
+    bf = Test8.new 0xF7
     bf.bool.should eq false
     bf.value.should eq 0xF7
   end
 
   it "sets bool" do
-    bf = TestField.new 0xF7
+    bf = Test8.new 0xF7
     bf.bool = true
     bf.bool.should eq true
     bf.value.should eq 0xFF
   end
 
   it "gets lower three" do
-    bf = TestField.new 0x0F
+    bf = Test8.new 0x0F
     bf.three.should eq 0x07
     bf.value.should eq 0x0F
   end
 
   it "sets lower three" do
-    bf = TestField.new 0x0F
+    bf = Test8.new 0x0F
     bf.three = 0x5
     bf.three.should eq 0x5
     bf.value.should eq 0x0D
@@ -73,5 +81,17 @@ describe BitField do
     bf.four.should eq true
     bf.rest.should eq 0xF0000F5
     bf.value.should eq 0x5F0000F5
+  end
+
+  it "prints exception on too few" do
+    expect_raises(Exception, "You must describe exactly 16 bits (15 bits have been described)") do
+      bf = TestTooFew.new 0x0000
+    end
+  end
+
+  it "prints exception on too many" do
+    expect_raises(Exception, "You must describe exactly 16 bits (17 bits have been described)") do
+      bf = TestTooMany.new 0x0000
+    end
   end
 end

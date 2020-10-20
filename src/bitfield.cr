@@ -28,7 +28,7 @@ abstract class BitField(T)
 
   macro build_methods
     {% pos = 0 %}
-    {% FIELDS.map {|f| pos += f[2]} %}
+    {% FIELDS.map { |f| pos += f[2] } %}
     SIZE = {{pos}}
 
     {% for field in FIELDS %}

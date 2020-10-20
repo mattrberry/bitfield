@@ -108,4 +108,20 @@ describe BitField do
     bf.double_bits
     bf.bits.should eq 0b00000010
   end
+
+  it "defines equals" do
+    bf = Test8.new(0xAF)
+    bf.should eq Test8.new(0xAF)
+    Test8.new(0xAF).should eq Test8.new(0xAF)
+    bf.should_not eq Test8.new(0xFA)
+    Test8.new(0xAF).should_not eq Test8.new(0xFA)
+  end
+
+  it "defines hash" do
+    bf = Test8.new(0xAF)
+    bf.hash.should eq Test8.new(0xAF).hash
+    Test8.new(0xAF).hash.should eq Test8.new(0xAF).hash
+    bf.hash.should_not eq Test8.new(0xFA).hash
+    Test8.new(0xAF).hash.should_not eq Test8.new(0xFA).hash
+  end
 end

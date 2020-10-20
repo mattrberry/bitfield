@@ -1,5 +1,8 @@
 # BitField - Fixed Length Bitfields in Crystal Lang
 
+[![Build Status](https://travis-ci.org/mattrberry/bitfield.svg?branch=master)](https://travis-ci.org/mattrberry/bitfield)
+
+
 The goal that BitField strives to accomplish is to allow for the creation of minimal-effort bitfields in Crystal. The intention is not intended to interop with C bitfields.
 
 ## Installation

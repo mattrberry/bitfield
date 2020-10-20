@@ -13,6 +13,8 @@ abstract class BitField(T)
         bits = sizeof(T) * 8
         raise "You must describe exactly #{bits} bits (#{SIZE} bits have been described)" unless SIZE == bits
       end
+
+      def_equals_and_hash @value
     end
   end
 

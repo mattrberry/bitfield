@@ -22,6 +22,14 @@ class TestTooMany < BitField(UInt16)
   num too_many, 17
 end
 
+class TestMethods < BitField(UInt8)
+  num bits, 8
+
+  def double_bits : Nil
+    self.bits <<= 1
+  end
+end
+
 describe BitField do
   it "gets whole value" do
     bf = Test8.new 0xAF
@@ -93,5 +101,11 @@ describe BitField do
     expect_raises(Exception, "You must describe exactly 16 bits (17 bits have been described)") do
       bf = TestTooMany.new 0x0000
     end
+  end
+
+  it "allows new method definitions" do
+    bf = TestMethods.new 0b00000001
+    bf.double_bits
+    bf.bits.should eq 0b00000010
   end
 end

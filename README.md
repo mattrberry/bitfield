@@ -23,6 +23,8 @@ The goal that BitField strives to accomplish is to allow for the creation of min
 require "bitfield"
 ```
 
+### Standard Definition
+
 You can define both numeric and boolean fields. When defining a numeric field, its type is that of the class' generic type. Additionally, the entire value of the bitfield is accessible though the #value method. An example bitfield might look something like this
 
 ```crystal
@@ -43,6 +45,36 @@ bf.three # => 0x4
 bf.bool = false
 bf.value # => 0x94
 ```
+
+### Locking Values
+
+Since I've primarily developed this shard for use in my emulator projects where bitfields are typically used to define IO registers, it's typical to have a register where fields may need to be locked in place in a bitfield. That is achievable by simply providing a `lock: true` argument with the field you want to lock.
+
+```crystal
+class TestLock < BitField(UInt8)
+  num top, 3
+  num mid, 2, lock: true
+  num bot, 3
+end
+```
+
+The effect of locking a field is that it will not change when writing to bitfield's #value method. If it needs to be mutated after initialization, it will need to be through the field's specific setter method.
+
+```crystal
+bf = TestLock.new 0x00
+bf.top # => 0x0
+bf.mid # => 0x0
+bf.bot # => 0x0
+bf.value = 0xFF
+bf.top # => 0x7
+bf.mid # => 0x0
+bf.bot # => 0x7
+bf.value # => 0xE7
+bf.mid = 0x3
+bf.value # => 0xFF
+```
+
+### Errors
 
 The full number of bits must be specified. For example, if you define your bitfield over a UInt8, you must specify exactly 8 bits in the field. If you fail to do so, you will get a message like this at runtime.
 

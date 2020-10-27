@@ -30,6 +30,14 @@ class TestMethods < BitField(UInt8)
   end
 end
 
+class TestLock < BitField(UInt8)
+  bool bool
+  bool locked_bool, lock: true
+  num num, 2
+  num locked_num, 2, lock: true
+  num extra, 2
+end
+
 describe BitField do
   it "gets whole value" do
     bf = Test8.new 0xAF
@@ -123,5 +131,18 @@ describe BitField do
     Test8.new(0xAF).hash.should eq Test8.new(0xAF).hash
     bf.hash.should_not eq Test8.new(0xFA).hash
     Test8.new(0xAF).hash.should_not eq Test8.new(0xFA).hash
+  end
+
+  it "allows locking values" do
+    bf = TestLock.new 0b00000000
+    bf.value.should eq 0b00000000
+    bf.value = 0xFF
+    bf.value.should eq 0b10110011
+    bf.locked_num = 0b01
+    bf.value.should eq 0b10110111
+    bf.locked_bool = true
+    bf.value.should eq 0b11110111
+    bf.value = 0
+    bf.value.should eq 0b01000100
   end
 end

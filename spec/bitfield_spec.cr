@@ -145,4 +145,9 @@ describe BitField do
     bf.value = 0
     bf.value.should eq 0b01000100
   end
+
+  it "defines to_s" do
+    Test8.new(0xAF).to_s.should eq "Test8(0xAF; four: 10, bool: true, three: 7)"
+    Test32.new(0x5F0000F5).to_s.should eq "Test32(0x5F0000F5; one: false, two: true, three: false, four: true, rest: 251658485)"
+  end
 end

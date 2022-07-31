@@ -84,6 +84,15 @@ You must describe exactly 8 bits (7 bits have been described)
 
 I'd love to make this a compile-time check, but unfortunately, the size of the generic type can't be determined at compile-time.
 
+### Printing Bitfields
+
+A `.to_s` method is automatically generated for each bitfield object. It includes the bitfield's name, its value as a hex string, and each of its fields.
+
+```crystal
+bf = Test8.new(0xAF)
+puts bf # => Test8(0xAF; four: 10, bool: true, three: 7)
+```
+
 ## Contributing
 
 1. Fork it (<https://github.com/mattrberry/bitfield/fork>)

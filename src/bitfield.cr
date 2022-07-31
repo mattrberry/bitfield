@@ -1,4 +1,8 @@
 abstract class BitField(T)
+  def inspect(io : IO) : Nil
+    to_s io
+  end
+
   macro inherited
     {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
 
@@ -6,6 +10,7 @@ abstract class BitField(T)
 
     macro finished
       build_methods
+      def_to_s
 
       getter value : T
 
@@ -59,6 +64,25 @@ abstract class BitField(T)
 
     def value=(value : T)
       @value = (@value & {{mask}}) | (value & ~{{mask}})
+    end
+  end
+
+  macro def_to_s
+    def to_s(io : IO) : Nil
+      io << self.class
+      io << "("
+      io << "0x"
+      io << @value.to_s(16).rjust(sizeof(T) * 2, '0').upcase
+      io << "; "
+      {% for field, idx in FIELDS %}
+        {% name = field[0].id %}
+        io << "{{name}}: "
+        io << self.{{name}}
+        {% if idx < FIELDS.size - 1 %}
+          io << ", "
+        {% end %}
+      {% end %}
+      io << ")"
     end
   end
 

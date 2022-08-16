@@ -30,11 +30,19 @@ class TestMethods < BitField(UInt8)
   end
 end
 
-class TestLock < BitField(UInt8)
+class TestReadOnly < BitField(UInt8)
   bool bool
-  bool locked_bool, lock: true
+  bool read_only_bool, read_only: true
   num num, 2
-  num locked_num, 2, lock: true
+  num read_only_num, 2, read_only: true
+  num extra, 2
+end
+
+class TestWriteOnly < BitField(UInt8)
+  bool bool
+  bool write_only_bool, write_only: true
+  num num, 2
+  num write_only_num, 2, write_only: true
   num extra, 2
 end
 
@@ -99,13 +107,13 @@ describe BitField do
     bf.value.should eq 0x5F0000F5
   end
 
-  it "prints exception on too few" do
+  it "raises exception on too few" do
     expect_raises(Exception, "You must describe exactly 16 bits (15 bits have been described)") do
       bf = TestTooFew.new 0x0000
     end
   end
 
-  it "prints exception on too many" do
+  it "raises exception on too many" do
     expect_raises(Exception, "You must describe exactly 16 bits (17 bits have been described)") do
       bf = TestTooMany.new 0x0000
     end
@@ -133,18 +141,40 @@ describe BitField do
     Test8.new(0xAF).hash.should_not eq Test8.new(0xFA).hash
   end
 
-  it "allows locking values" do
-    bf = TestLock.new 0b00000000
+  it "allows read-only values" do
+    bf = TestReadOnly.new 0b00000000
     bf.value.should eq 0b00000000
     bf.value = 0xFF
     bf.value.should eq 0b10110011
-    bf.locked_num = 0b01
+    bf.read_only_num = 0b01
     bf.value.should eq 0b10110111
-    bf.locked_bool = true
+    bf.read_only_bool = true
     bf.value.should eq 0b11110111
     bf.value = 0
     bf.value.should eq 0b01000100
   end
+
+  it "allows write-only values" do
+    bf = TestWriteOnly.new 0b00000000
+    bf.value.should eq 0b00000000
+    bf.value = 0xFF
+    bf.value.should eq 0b10110011
+    bf.write_only_num.should eq 0b11
+    bf.write_only_bool.should eq true
+    bf.write_only_num = 0b01
+    bf.value.should eq 0b10110011
+    bf.write_only_num.should eq 0b01
+    bf.write_only_bool.should eq true
+    bf.write_only_bool = false
+    bf.value.should eq 0b10110011
+    bf.write_only_num.should eq 0b01
+    bf.write_only_bool.should eq false
+    bf.value = 0
+    bf.value.should eq 0b00000000
+    bf.write_only_num.should eq 0b00
+    bf.write_only_bool.should eq false
+  end
+
 
   it "defines to_s" do
     Test8.new(0xAF).to_s.should eq "Test8(0xAF; four: 10, bool: true, three: 7)"

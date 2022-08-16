@@ -46,32 +46,26 @@ bf.bool = false
 bf.value # => 0x94
 ```
 
-### Locking Values
+### Read-Only and Write-Only Fields
 
-Since I've primarily developed this shard for use in my emulator projects where bitfields are typically used to define IO registers, it's typical to have a register where fields may need to be locked in place in a bitfield. That is achievable by simply providing a `lock: true` argument with the field you want to lock.
+It's possible to mark fields as read-only or write-only. Read-only fields can still be written to by calling their setters directly, just as write-only fields can be read by calling their getters directly. The initial value will be taken as-is.
 
 ```crystal
-class TestLock < BitField(UInt8)
-  num top, 3
-  num mid, 2, lock: true
-  num bot, 3
+class TestReadWriteOnly < BitField(UInt8)
+  num read_only, 4, read_only: true
+  num write_only, 4, write_only: true
 end
 ```
 
-The effect of locking a field is that it will not change when writing to bitfield's #value method. If it needs to be mutated after initialization, it will need to be through the field's specific setter method.
-
 ```crystal
-bf = TestLock.new 0x00
-bf.top # => 0x0
-bf.mid # => 0x0
-bf.bot # => 0x0
-bf.value = 0xFF
-bf.top # => 0x7
-bf.mid # => 0x0
-bf.bot # => 0x7
-bf.value # => 0xE7
-bf.mid = 0x3
-bf.value # => 0xFF
+bf = TestReadWriteOnly.new 0xFF
+bf.read_only # => 0xF
+bf.write_only # => 0xF
+bf.value # => 0xF0
+bf.value = 0
+bf.read_only # => 0xF
+bf.write_only # => 0x0
+bf.value # => 0xF0
 ```
 
 ### Errors

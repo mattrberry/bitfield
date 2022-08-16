@@ -12,8 +12,6 @@ abstract class BitField(T)
       build_methods
       def_to_s
 
-      getter value : T
-
       def initialize(@value : T)
         bits = sizeof(T) * 8
         raise "You must describe exactly #{bits} bits (#{SIZE} bits have been described)" unless SIZE == bits
@@ -23,32 +21,47 @@ abstract class BitField(T)
     end
   end
 
-  macro num(name, size, lock = false)
-    {% FIELDS << {name, :num, size, lock} %}
+  macro num(name, size, read_only = false, write_only = false)
+    add_field({{name}}, :num, {{size}}, {{read_only}}, {{write_only}})
   end
 
-  macro bool(name, lock = false)
-    {% FIELDS << {name, :bool, 1, lock} %}
+  macro bool(name, read_only = false, write_only = false)
+    add_field({{name}}, :bool, 1, {{read_only}}, {{write_only}})
+  end
+
+  # Exists as a general way to add fields to the FIELD list. Guarantees that
+  # the correct number of parameters are passed, at least.
+  macro add_field(name, type, size, read_only, write_only)
+    {% raise "Cannot mark a field as both read_only and write_only" if read_only && write_only %}
+    {% FIELDS << {name, type, size, read_only, write_only} %}
   end
 
   macro build_methods
     {% pos = 0 %}
     {% FIELDS.map { |f| pos += f[2] } %}
     SIZE = {{pos}}
-    {% mask = 0 %}
+    {% read_only_mask = 0 %}
+    {% write_only_mask = 0 %}
 
     {% for field in FIELDS %}
       {% name = field[0].id %}
       {% bool = field[1] == :bool %}
       {% size = field[2] %}
-      {% lock = field[3] %}
+      {% read_only = field[3] %}
+      {% write_only = field[4] %}
       {% type = bool ? Bool : T %}
 
       {% pos -= size %}
 
-      {% if lock %}
+      {% if read_only %}
         {% for i in (0...size) %}
-          {% mask = mask | 1 << (pos + i) %}
+          {% read_only_mask = read_only_mask | 1 << (pos + i) %}
+        {% end %}
+      {% end %}
+
+      {% if write_only %}
+        {% for i in (0...size) %}
+          {% write_only_mask = write_only_mask | 1 << (pos + i) %}
         {% end %}
       {% end %}
 
@@ -62,8 +75,12 @@ abstract class BitField(T)
       end
     {% end %}
 
+    def value : T
+      @value & ~{{write_only_mask}}
+    end
+
     def value=(value : T)
-      @value = (@value & {{mask}}) | (value & ~{{mask}})
+      @value = (@value & {{read_only_mask}}) | (value & ~{{read_only_mask}})
     end
   end
 

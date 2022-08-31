@@ -29,9 +29,9 @@ You can define both numeric and boolean fields. When defining a numeric field, i
 
 ```crystal
 class Test8 < BitField(UInt8)
-  num four, 4
-  bool bool
   num three, 3
+  bool bool
+  num four, 4
 end
 ```
 
@@ -84,7 +84,7 @@ A `.to_s` method is automatically generated for each bitfield object. It include
 
 ```crystal
 bf = Test8.new(0xAF)
-puts bf # => Test8(0xAF; four: 10, bool: true, three: 7)
+puts bf # => Test8(0xAF; three: 7, bool: true, four: 10)
 ```
 
 ## Contributing

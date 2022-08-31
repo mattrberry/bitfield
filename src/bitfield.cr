@@ -38,8 +38,6 @@ abstract class BitField(T)
 
   macro build_methods
     {% pos = 0 %}
-    {% FIELDS.map { |f| pos += f[2] } %}
-    SIZE = {{pos}}
     {% read_only_mask = 0 %}
     {% write_only_mask = 0 %}
 
@@ -49,8 +47,6 @@ abstract class BitField(T)
       {% size = field[2] %}
       {% read_only = field[3] %}
       {% write_only = field[4] %}
-
-      {% pos -= size %}
 
       {% if read_only %}
         {% for i in (0...size) %}
@@ -72,7 +68,11 @@ abstract class BitField(T)
         {% if type == Bool %} val = val ? 1 : 0 {% end %}
         set_val({{size}}, {{pos}})
       end
+
+      {% pos += size %}
     {% end %}
+
+    SIZE = {{pos}}
 
     def value : T
       @value & ~{{write_only_mask}}

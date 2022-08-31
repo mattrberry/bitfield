@@ -1,17 +1,17 @@
 require "./spec_helper"
 
 class Test8 < BitField(UInt8)
-  num four, 4
-  bool bool
   num three, 3
+  bool bool
+  num four, 4
 end
 
 class Test32 < BitField(UInt32)
-  bool one
-  bool two
-  bool three
-  bool four
   num rest, 28
+  bool four
+  bool three
+  bool two
+  bool one
 end
 
 class TestTooFew < BitField(UInt16)
@@ -31,19 +31,19 @@ class TestMethods < BitField(UInt8)
 end
 
 class TestReadOnly < BitField(UInt8)
-  bool bool
-  bool read_only_bool, read_only: true
-  num num, 2
-  num read_only_num, 2, read_only: true
   num extra, 2
+  num read_only_num, 2, read_only: true
+  num num, 2
+  bool read_only_bool, read_only: true
+  bool bool
 end
 
 class TestWriteOnly < BitField(UInt8)
-  bool bool
-  bool write_only_bool, write_only: true
-  num num, 2
-  num write_only_num, 2, write_only: true
   num extra, 2
+  num write_only_num, 2, write_only: true
+  num num, 2
+  bool write_only_bool, write_only: true
+  bool bool
 end
 
 describe BitField do
@@ -175,9 +175,8 @@ describe BitField do
     bf.write_only_bool.should eq false
   end
 
-
   it "defines to_s" do
-    Test8.new(0xAF).to_s.should eq "Test8(0xAF; four: 10, bool: true, three: 7)"
-    Test32.new(0x5F0000F5).to_s.should eq "Test32(0x5F0000F5; one: false, two: true, three: false, four: true, rest: 251658485)"
+    Test8.new(0xAF).to_s.should eq "Test8(0xAF; three: 7, bool: true, four: 10)"
+    Test32.new(0x5F0000F5).to_s.should eq "Test32(0x5F0000F5; rest: 251658485, four: true, three: false, two: true, one: false)"
   end
 end

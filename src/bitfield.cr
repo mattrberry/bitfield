@@ -6,7 +6,7 @@ abstract class BitField(T)
   macro inherited
     {% raise "Cannot create a BitField from a non-integer" unless T <= Int %}
 
-    FIELDS = [] of Tuple(String, Symbol, Int32, Bool) # name, type, size, lock (types don't actually matter here..)
+    FIELDS = [] of Tuple(String, Crystal::Macros::Path, Int32, Bool, Bool) # name, type, size, read_only, write_only (types don't actually matter here..)
 
     macro finished
       build_methods
@@ -22,14 +22,14 @@ abstract class BitField(T)
   end
 
   macro num(name, size, read_only = false, write_only = false)
-    add_field({{name}}, :num, {{size}}, {{read_only}}, {{write_only}})
+    add_field({{name}}, T, {{size}}, {{read_only}}, {{write_only}})
   end
 
   macro bool(name, read_only = false, write_only = false)
-    add_field({{name}}, :bool, 1, {{read_only}}, {{write_only}})
+    add_field({{name}}, Bool, 1, {{read_only}}, {{write_only}})
   end
 
-  # Exists as a general way to add fields to the FIELD list. Guarantees that
+  # Exists as a general way to add fields to the FIELDS list. Guarantees that
   # the correct number of parameters are passed, at least.
   macro add_field(name, type, size, read_only, write_only)
     {% raise "Cannot mark a field as both read_only and write_only" if read_only && write_only %}
@@ -45,11 +45,10 @@ abstract class BitField(T)
 
     {% for field in FIELDS %}
       {% name = field[0].id %}
-      {% bool = field[1] == :bool %}
+      {% type = field[1].resolve %}
       {% size = field[2] %}
       {% read_only = field[3] %}
       {% write_only = field[4] %}
-      {% type = bool ? Bool : T %}
 
       {% pos -= size %}
 
@@ -66,11 +65,11 @@ abstract class BitField(T)
       {% end %}
 
       def {{name}} : {{type}}
-        get_val({{size}}, {{pos}}) {% if bool %} > 0 {% end %}
+        get_val({{size}}, {{pos}}) {% if type == Bool %} > 0 {% end %}
       end
 
       def {{name}}=(val : {{type}}) : Nil
-        {% if bool %} val = val ? 1 : 0 {% end %}
+        {% if type == Bool %} val = val ? 1 : 0 {% end %}
         set_val({{size}}, {{pos}})
       end
     {% end %}

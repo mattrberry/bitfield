@@ -46,6 +46,19 @@ bf.bool = false
 bf.value # => 0x94
 ```
 
+### Enum Fields
+In addition to number and boolean fields, enums are also supported. They're written in the form
+
+```crystal
+class TestEnumBitfield < BitField(UInt8)
+  enumeration enum_field, MyEnum
+end
+```
+
+The number of bits taken by the enum is defined automatically by the max value of the enum's values.
+
+Keep in mind that the value returned by the field is created using `MyEnum.new` rather than `MyEnum.from_value`, which means that it won't throw an exception if an invalid value is written.
+
 ### Read-Only and Write-Only Fields
 
 It's possible to mark fields as read-only or write-only. Read-only fields can still be written to by calling their setters directly, just as write-only fields can be read by calling their getters directly. The initial value will be taken as-is.

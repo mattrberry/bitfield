@@ -1,7 +1,14 @@
 require "./spec_helper"
 
+enum MyEnum
+  A
+  B = 3
+  C = 2
+  D = 4
+end
+
 class Test8 < BitField(UInt8)
-  num three, 3
+  enumeration enum_field, MyEnum
   bool bool
   num four, 4
 end
@@ -84,17 +91,17 @@ describe BitField do
     bf.value.should eq 0xFF
   end
 
-  it "gets lower three" do
+  it "gets enum" do
     bf = Test8.new 0x0F
-    bf.three.should eq 0x07
+    bf.enum_field.should eq MyEnum.new(0x7)
     bf.value.should eq 0x0F
   end
 
-  it "sets lower three" do
+  it "sets enum" do
     bf = Test8.new 0x0F
-    bf.three = 0x5
-    bf.three.should eq 0x5
-    bf.value.should eq 0x0D
+    bf.enum_field = MyEnum::B
+    bf.enum_field.should eq MyEnum::B
+    bf.value.should eq 0x0B
   end
 
   it "works on u32" do
@@ -176,7 +183,7 @@ describe BitField do
   end
 
   it "defines to_s" do
-    Test8.new(0xAF).to_s.should eq "Test8(0xAF; three: 7, bool: true, four: 10)"
+    Test8.new(0xAB).to_s.should eq "Test8(0xAB; enum_field: B, bool: true, four: 10)"
     Test32.new(0x5F0000F5).to_s.should eq "Test32(0x5F0000F5; rest: 251658485, four: true, three: false, two: true, one: false)"
   end
 end

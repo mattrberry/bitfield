@@ -29,6 +29,28 @@ abstract class BitField(T)
     add_field({{name}}, Bool, 1, {{read_only}}, {{write_only}})
   end
 
+  macro enumeration(name, type, read_only = false, write_only = false)
+    {%
+      type = type.resolve
+      max_enum_value = 0
+      type.constants.each do |constant|
+        constant_value = type.constant(constant)
+        max_enum_value = constant_value if constant_value > max_enum_value
+      end
+      necessary_bits = 0
+      val = 1
+      buf = [nil] of NilLiteral # this is a hack to get around the lack of loops in macros
+      buf.each do
+        if val <= max_enum_value
+          necessary_bits += 1
+          val *= 2
+          buf << nil
+        end
+      end
+    %}
+    add_field({{name}}, {{type}}, {{necessary_bits}}, {{read_only}}, {{write_only}})
+  end
+
   # Exists as a general way to add fields to the FIELDS list. Guarantees that
   # the correct number of parameters are passed, at least.
   macro add_field(name, type, size, read_only, write_only)
@@ -61,11 +83,20 @@ abstract class BitField(T)
       {% end %}
 
       def {{name}} : {{type}}
-        get_val(@value, {{size}}, {{pos}}) {% if type == Bool %} > 0 {% end %}
+        val = get_val(@value, {{size}}, {{pos}})
+        {% if type == Bool %}
+          val > 0
+        {% elsif type <= Enum %}
+          {{type}}.new(val)
+        {% end %}
       end
 
       def {{name}}=(val : {{type}}) : Nil
-        {% if type == Bool %} val = val ? 1 : 0 {% end %}
+        {% if type == Bool %}
+          val = val ? 1 : 0
+        {% elsif type <= Enum %}
+          val = val.value
+        {% end %}
         set_val(@value, val, {{size}}, {{pos}})
       end
 

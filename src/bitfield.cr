@@ -31,10 +31,10 @@ abstract class BitField(T)
 
   macro enumeration(name, type, read_only = false, write_only = false)
     {%
-      type = type.resolve
+      resolved_type = type.resolve
       max_enum_value = 0
-      type.constants.each do |constant|
-        constant_value = type.constant(constant)
+      resolved_type.constants.each do |constant|
+        constant_value = resolved_type.constant(constant)
         max_enum_value = constant_value if constant_value > max_enum_value
       end
       necessary_bits = 0
@@ -64,37 +64,40 @@ abstract class BitField(T)
     {% write_only_mask = 0 %}
 
     {% for field in FIELDS %}
-      {% name = field[0].id %}
-      {% type = field[1].resolve %}
-      {% size = field[2] %}
-      {% read_only = field[3] %}
-      {% write_only = field[4] %}
+      {%
+        name = field[0].id
+        type = field[1]
+        resolved_type = type.resolve
+        size = field[2]
+        read_only = field[3]
+        write_only = field[4]
 
-      {% if read_only %}
-        {% for i in (0...size) %}
-          {% read_only_mask = read_only_mask | 1 << (pos + i) %}
-        {% end %}
-      {% end %}
+        if read_only
+          (0...size).each do |i|
+            read_only_mask = read_only_mask | 1 << (pos + i)
+          end
+        end
 
-      {% if write_only %}
-        {% for i in (0...size) %}
-          {% write_only_mask = write_only_mask | 1 << (pos + i) %}
-        {% end %}
-      {% end %}
+        if write_only
+          (0...size).each do |i|
+            write_only_mask = write_only_mask | 1 << (pos + i)
+          end
+        end
+      %}
 
       def {{name}} : {{type}}
         val = get_val(@value, {{size}}, {{pos}})
-        {% if type == Bool %}
+        {% if resolved_type == Bool %}
           val > 0
-        {% elsif type <= Enum %}
+        {% elsif resolved_type <= Enum %}
           {{type}}.new(val)
         {% end %}
       end
 
       def {{name}}=(val : {{type}}) : Nil
-        {% if type == Bool %}
+        {% if resolved_type == Bool %}
           val = val ? 1 : 0
-        {% elsif type <= Enum %}
+        {% elsif resolved_type <= Enum %}
           val = val.value
         {% end %}
         set_val(@value, val, {{size}}, {{pos}})

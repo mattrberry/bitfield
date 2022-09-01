@@ -61,12 +61,12 @@ abstract class BitField(T)
       {% end %}
 
       def {{name}} : {{type}}
-        get_val({{size}}, {{pos}}) {% if type == Bool %} > 0 {% end %}
+        get_val(@value, {{size}}, {{pos}}) {% if type == Bool %} > 0 {% end %}
       end
 
       def {{name}}=(val : {{type}}) : Nil
         {% if type == Bool %} val = val ? 1 : 0 {% end %}
-        set_val({{size}}, {{pos}})
+        set_val(@value, val, {{size}}, {{pos}})
       end
 
       {% pos += size %}
@@ -102,12 +102,12 @@ abstract class BitField(T)
     end
   end
 
-  macro get_val(size, start)
-    (@value >> {{start}} & mask({{size}}))
+  macro get_val(src, size, start)
+    ({{src}} >> {{start}} & mask({{size}}))
   end
 
-  macro set_val(size, start)
-    (@value = @value & ~shifted_mask({{size}}, {{start}}) | (val & mask({{size}})) << {{start}})
+  macro set_val(dst, src, size, start)
+    ({{dst}} = {{dst}} & ~shifted_mask({{size}}, {{start}}) | ({{src}} & mask({{size}})) << {{start}})
   end
 
   macro mask(size)

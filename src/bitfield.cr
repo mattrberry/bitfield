@@ -15,6 +15,7 @@ abstract class BitField(T)
       def initialize(@value : T)
         bits = sizeof(T) * 8
         raise "You must describe exactly #{bits} bits (#{SIZE} bits have been described)" unless SIZE == bits
+        update_all_fields value, set_read_only_fields: true
       end
 
       def_equals_and_hash @value
@@ -85,22 +86,19 @@ abstract class BitField(T)
         end
       %}
 
-      def {{name}} : {{type}}
-        val = get_val(@value, {{size}}, {{pos}})
-        {% if resolved_type == Bool %}
-          val > 0
-        {% elsif resolved_type <= Enum %}
-          {{type}}.new(val)
-        {% end %}
-      end
+      @{{name}} = uninitialized {{type}} # workaround for https://github.com/crystal-lang/crystal/issues/7975
+      getter {{name}} : {{type}}
 
       def {{name}}=(val : {{type}}) : Nil
+        @{{name}} = val
         {% if resolved_type == Bool %}
-          val = val ? 1 : 0
+          %val = val ? 1 : 0
         {% elsif resolved_type <= Enum %}
-          val = val.value
+          %val = val.value
+        {% else %}
+          %val = val
         {% end %}
-        set_val(@value, val, {{size}}, {{pos}})
+        set_val(@value, %val, {{size}}, {{pos}})
       end
 
       {% pos += size %}
@@ -112,8 +110,9 @@ abstract class BitField(T)
       @value & ~{{write_only_mask}}
     end
 
-    def value=(value : T)
+    def value=(value : T) : Nil
       @value = (@value & {{read_only_mask}}) | (value & ~{{read_only_mask}})
+      update_all_fields value
     end
   end
 
@@ -127,13 +126,43 @@ abstract class BitField(T)
       {% for field, idx in FIELDS %}
         {% name = field[0].id %}
         io << "{{name}}: "
-        io << self.{{name}}
+        io << @{{name}}
         {% if idx < FIELDS.size - 1 %}
           io << ", "
         {% end %}
       {% end %}
       io << ")"
     end
+  end
+
+  macro update_all_fields(value, set_read_only_fields = false)
+    {% pos = 0 %}
+    {% for field in FIELDS %}
+      {%
+        name = field[0].id
+        type = field[1]
+        resolved_type = type.resolve
+        size = field[2]
+        read_only = field[3]
+        write_only = field[4]
+      %}
+
+      {% unless read_only && !set_read_only_fields %}
+        %val = get_val({{value}}, {{size}}, {{pos}})
+
+        {% if resolved_type == Bool %}
+          %f = %val != 0
+        {% elsif resolved_type <= Enum %}
+          %f = {{type}}.new(%val)
+        {% else %}
+          %f = %val
+        {% end %}
+
+        @{{name}} = %f
+      {% end %}
+
+      {% pos += size %}
+    {% end %}
   end
 
   macro get_val(src, size, start)
